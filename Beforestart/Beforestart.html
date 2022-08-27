@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Exists4All</title>
+    <link rel="stylesheet" href="https://exists4all.github.io/main.css">
+    <link rel="stylesheet" href="https://exists4all.github.io/prettify-theme.css">
+    <link rel="stylesheet" href="https://exists4all.github.io/prettify.css">
+    <link rel="stylesheet" href="https://exists4all.github.io/prettify.js">
+    <link rel="stylesheet" href="https://exists4all.github.io/run_prettify.js">
+    <link rel="stylesheet" href="https://exists4all.github.io/style.css">
+</head>
+<body>
+
+    <p>
+        <a href="https://exists4all.github.io/">Home</a>
+        <a style="margin-left: 16px" href="https://github.com/exists4all">GitHub</a>
+
+    </p>
+
+    <h1>A tutorial by Exists4All</h1>
+    <p>
+        <h1>
+            Before start
+        </h1>
+    </p>
+
+    <p>
+        Hi everyone, welcome to my kernel programming tutorial document. I started learning kernel programming myself already and decided to write a document during my learning process because of lack of resources on this topic. Do not get me wrong, there are lots of good resources out there but most of them are aimed towards intermediate or professionals.
+        I will include in this document all of the steps that I will take to implement my drivers. These drivers will be easy mostly, so if you are not a beginner I highly recommend not reading this document because this is not for you.
+
+
+    </p>
+
+
+    <ol>
+        <li>Kernel programming is not anything like user mode programming, information about its structure is very limited and most of the time you have to dig very deep into MSDN documentation to understand where you need to start.</li>
+        <li>Kernel mode codes have to be perfect, any flaw in them will cause serious problems and most of the time lead to BSOD ( blue screen of death) if they are not treated perfectly.</li>
+        <li>For the structure without any documentation you have to do the dirty work yourself and RE (reverse engineering) OS files yourself and extract documentation yourself which I will explain later in this document.</li>
+        <li>I am new to these things myself so there will be unoptimized and silly mistakes everywhere. I will fix them any time that I find them and update the document version for other people to use better information. Also, you can send your suggestions to my email.</li>
+        <li>My method for teaching will be different from other books out there. Before reading this document I highly suggest reading pavel book on kernel programming because I won't dive deep into the definition of basic concepts.</li>
+        <li>I am writing this document because all the resources wrote with the assumption that the reader is a very high skilled C++ programmer and reverse engineer at the same time and most of time when i asked question on different platform very few people willing to help and also those book do not show you how you actually have to use resources to develop your own drivers (kernel programs) that is one of the most important reasons i am writing this document so i hope you enjoy it.</li>
+
+    </ol>
+
+    <p>
+        <h1>
+           Golden notes
+        </h1>
+    </p>
+
+    <p>
+        <ol>
+            <li> <a href="https://docs.microsoft.com/en-us/windows-hardware/drivers/">This page</a> is your main resource, stick to it and spend most of your hours here. I highly suggest going through the Kernel-Mode <a href="https://docs.microsoft.com/en-us/windows-hardware/drivers/install/guid-devinterface-volume">Driver Architecture Design Guide</a>. Read it slowly and try to digest it and practice alongside it and get back to it when you need to. For kernel mode API, always go <a href="https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/"> here</a> first.</li>
+            <li>Sometimes you want to do something in kernel mode and you just do not know which function will do the job for you. In such situations I highly recommend you to visit <a href="https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/">API reference docs for Windows Driver Kit</a> and try to go to the logical part of it and read APIs descriptions. It will help you a lot. I will show you with some real examples how to do this.</li>
+            <li>Always and always treat every single warning as an error and fix it.</li>
+            <li>Usually you won't find examples for kernel functions. The best solution is read documentation in your IDE header files and try to figure it out yourself. It’s not easy at first but it will get easier when you get used to kernel functions. You can use <a href="https://cpp.hotexamples.com/">this</a> website to see if there is an example of a key function that you are looking for, you can also check github as well.</li>
+            <li>You need a virtual machine to practice kernel programming. I also recommend <a href="https://www.triplefault.io/2017/07/setting-up-kernel-debugging-using.html">this(also saved in case of broken link in same directory)</a> website for windbg and virtual machine synchronization.</li>
+            <li>In order to be able to compile kernel mode codes, you have to download visual studio C++ workstation, windows SDK and finally windows WDK and install them in order respectively. Also I highly recommend installing all of them in the default path, because I changed the default paths and that led to failure. Do it at your own risk.</li>
+            <li>I suggest compiling code on your main OS and then running .sys on your VM.</li>
+            <li>You can alos use <a href="https://github.com/microsoft/Windows-driver-samples/blob/main/storage/class/disk/src/disk.c">Windows-driver-samples</a> to find out what you need to do.</li>
+            <li>You need to run your drivers on the test mode to disable driver signature check to enable test mode open cmd as administrator and run below instruction and then reboot your system you have to see test mode on the right corner side of your windows after it. If you want to run you code without test mode you have to use other signed driver vulnerability which we will discuss later on you can read more about it <a href="https://repnz.github.io/posts/abusing-signed-drivers/">here</a> and <a href="https://j00ru.vexillium.org/2010/06/insight-into-the-driver-signature-enforcement/">here</a> and also <a href="https://j00ru.vexillium.org/2012/11/defeating-windows-driver-signature-enforcement-part-1-default-drivers/">here</a>.(pages saved in case of broken link)</li>
+
+            <div class="code-block">
+                <span class="block-header">
+                <strong class="block-title"><em><a id="registers-block-3" href="#CMD code">CMD Code</a></em></strong>
+                </span>
+                <pre class="prettyprint">
+                    <code class="">
+                        bcdedit /set testsigning on
+                    </code>
+                </pre>
+                <p class="block-usages"></p>
+            </div>
+
+            <li>Remember this hardware on your virtual machine will be treated differently, for example your physical hard disk wont be recognized as real physical disk instead it will be a virtual disk as we will see in future tutorial. If you want to work with real hardware the best option is use a real computer and debug it over the network with windbg.</li>
+            <li>For some functions you are going to use internal .lib functions and when you use the header file you will get a linker error. For example <strong>FltGetVolumeGuidName</strong> function, you will get linker error if you just include <strong>fltkernel.h</strong> in your source code to fix this problem you find .lib name which is <strong>FltMgr.lib</strong> in our case then head to <strong>Linker->Input->Additional Dependencies</strong> and add <strong>$(DDK_LIB_PATH)\fltMgr.lib</strong> to resolve issue.</li>
+
+
+        </ol>
+    </p>
+
+
+</body>
+</html>
