@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Exists4All</title>
+    <link rel="stylesheet" href="https://exists4all.github.io/main.css">
+    <link rel="stylesheet" href="https://exists4all.github.io/prettify-theme.css">
+    <link rel="stylesheet" href="https://exists4all.github.io/prettify.css">
+    <link rel="stylesheet" href="https://exists4all.github.io/prettify.js">
+    <link rel="stylesheet" href="https://exists4all.github.io/run_prettify.js">
+    <link rel="stylesheet" href="https://exists4all.github.io/style.css">
+</head>
+<body>
+
+    <p>
+        <a href="https://exists4all.github.io/">Home</a>
+        <a style="margin-left: 16px" href="https://github.com/exists4all">GitHub</a>
+
+    </p>
+
+    <h1>A tutorial by Exists4All</h1>
+    <p>
+        <h1>
+            Create a simple Disk Serial Spoofer part 1
+        </h1>
+    </p>
+
+    <p>
+        In this tutorial we are going to create a static disk drive serial number spoofer. This project will be a little long and need some basic knowledge about operation systems and reverse engineering. We are going to use visual studio community, IDA and windbg and I used windows 11 enterprise.
+    </p>
+
+    <p>
+        The first step is to find out how windows get that information. By googling you can see easily you have to use wmic commands. If you open CMD and execute the <strong>wmic diskdrive get serialnumber</strong>, you can retrieve all the disk serials.
+        So that is logical analyzing wmic in windbg, however if you do that you will find out wmic tokenize commands and send them to the kernel and then retrieve data in a xml file and fetch from there. So for simplicity we are not going to analyze wmic. Instead we are going to access wmic command directly using C++ and use debug command to see which kernel API used to get those data.
+    </p>
+
+    <p>
+        But for the people who are interested in analyzing wmic i will point to a little hint to do it.First of all run your virtual OS and attach kernel debugger aka windbg to it. Break windbg and use <strong>!sym noisy</strong> command and then execute <strong>lm</strong> and finally <strong>.reload</strong> to reload all needed pdbs.
+        Also keep it in mind to add debug filter print to your OS so you can see dbgprint data in debugger, just google it.After windbg downloaded all the necessary data open execute <strong>g</strong> command and run wmic on VM. After that execute <strong>.reload /f wmic.exe</strong> this will cause windbg download wmic pdb file so you can copy it from windbg path for pdbs and use it with ida to analyzing wmic.exe.
+        After this we want to get in to the wmic.exe context to do that execute <strong>!process 0 0 wmic.exe</strong> keep note from you process ID and then execute <strong>.process /i YOURPROCESSID</strong> execute <strong>g</strong> command to get to the context.
+
+    </p>
+
+    <p>
+        Now execute the <strong>lm</strong> command and search for WMIC in the modules list, click on it and then you can see all the functions WMIC uses. Now for exampl you can put a break point on <strong>WMIC!CExecEngine::ExecuteCommand</strong> using <strong>bp WMIC!CExecEngine::ExecuteCommand</strong> and then execute <strong>g</strong>, now use a command like <strong>diskdrive</strong> to hit break point on windbg.
+        You can use this method alongside wmic.exe and its pdb in IDA to analyze.
+    </p>
+
+    <p>
+        As I mentioned before wmic will make it harder to understand how windows get disk serials, instead we are going to get those data directly ourselves by calling wmic directly with our C++ program. I used this code <a href="https://gist.github.com/micjabbour/a2fbe50160862e6abe439c0b0769c3fb">this code</a>, just compile it with a static linked library and copy it alongside its pdb file to your vm.
+        Now we want to be able to use windbg to get kernel apis, but how do we put breakpoints on it?! There are two methods one is to breakpoint onload, and the other is simply adding  <strong>__debugbreak();</strong> before the place we want to hit. I added this command immediately after main. The other method is useful when we do not have access to source code.For those who want to know how to do it the other way, just follow the instructions below.
+    </p>
+
+
+    <div class="code-block">
+        <span class="block-header">
+            Break point onload instructions</a></em></strong>
+        </span>
+        <pre class="prettyprint">
+        <code class="">
+                       1.!gflag +ksl
+                       2.sxe ld myfile.exe
+                       3.g
+                       4.execute your file, you will hit break point onload
+                       5.!gflag -ksl (do not need flag after hit)
+                    </code>
+                </pre>
+        <p class="block-usages"></p>
+    </div>
+
+    <p>
+        But in our case we have access to source code so just add debug instruction after main and then copy .pdb and your exe to your vm, also set your source code path in windbg. After that simply execute your file on your VM, this will cause windbg to hit breakpoint, then use the <strong>.reload</strong> command to reload out program pdb.
+        I compiled my file with <strong>UserFetch</strong> name, if you did every thing right you should see something like below:
+    </p>
+
+    <div class="code-block">
+        <span class="block-header">
+            Log</a></em></strong>
+        </span>
+        <pre class="prettyprint">
+        <code class="">
+                Loading User Symbols
+                .....
+                Loading unloaded module list
+                .......
+                SYMSRV:  BYINDEX: 0x2D
+                C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym
+                UserFetch.pdb
+                2E5ED8B3A33C4594893DBF2981D63F982
+                SYMSRV:  UNC: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\UserFetch.pdb - path not found
+                SYMSRV:  UNC: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\UserFetch.pd_ - path not found
+                SYMSRV:  UNC: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\file.ptr - path not found
+                SYMSRV:  RESULT: 0x80070003
+                SYMSRV:  BYINDEX: 0x2E
+                C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym*https://msdl.microsoft.com/download/symbols
+                UserFetch.pdb
+                2E5ED8B3A33C4594893DBF2981D63F982
+                SYMSRV:  UNC: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\UserFetch.pdb - path not found
+                SYMSRV:  UNC: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\UserFetch.pd_ - path not found
+                SYMSRV:  UNC: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\file.ptr - path not found
+                SYMSRV:  HTTPGET: /download/symbols/UserFetch.pdb/2E5ED8B3A33C4594893DBF2981D63F982/UserFetch.pdb
+                SYMSRV:  HttpQueryInfo: 80190194 - HTTP_STATUS_NOT_FOUND
+                SYMSRV:  HTTPGET: /download/symbols/UserFetch.pdb/2E5ED8B3A33C4594893DBF2981D63F982/UserFetch.pd_
+                SYMSRV:  HttpQueryInfo: 80190194 - HTTP_STATUS_NOT_FOUND
+                SYMSRV:  HTTPGET: /download/symbols/UserFetch.pdb/2E5ED8B3A33C4594893DBF2981D63F982/file.ptr
+                SYMSRV:  HttpQueryInfo: 80190194 - HTTP_STATUS_NOT_FOUND
+                SYMSRV:  RESULT: 0x80190194
+                SYMSRV:  UNC: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\UserFetch.pdb - path not found
+                SYMSRV:  UNC: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\UserFetch.pdb - path not found
+                SYMSRV:  UNC: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\UserFetch.pd_ - path not found
+                SYMSRV:  UNC: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\UserFetch.pd_ - path not found
+                SYMSRV:  UNC: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\file.ptr - path not found
+                SYMSRV:  UNC: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\file.ptr - path not found
+                DBGHELP: I:\Codes\UserFetch\x64\Debug\UserFetch.pdb cached to C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\sym\UserFetch.pdb\2E5ED8B3A33C4594893DBF2981D63F982\UserFetch.pdb
+
+
+            </code>
+                </pre>
+        <p class="block-usages"></p>
+    </div>
+
+    <p>
+        Also you have to be able to see your source code alongside other information like below.
+    </p>
+    <p>
+        <img src="LoadSelfPDB.jpg" alt="LoadSelfPDB">
+    </p>
+    <p>
+        Now this part is very very important, we want to be able to go to the kernel side and continue tracing kernel APIs there. To do this we need to find <strong>syscall</strong> instructions first.To do this just execute <strong>pc</strong> and then <strong>t</strong> command respectively till you reach a syscall.
+        After that we need to find a function that will cause dispatch from user mode to kernel mode using the <strong>SSD table</strong> which I will explain later. execute <strong>p</strong> command till you reach first <strong>if</strong> then using <strong>t</strong> to trace in to it and then use mentioned instructions.
+
+    </p>
+
+    <p>
+        After a while you will hit <strong>DeviceIoControl</strong> which is look like below:
+    </p>
+
+    <div class="code-block">
+        <span class="block-header">
+            DeviceIoControl instructions</a></em></strong>
+        </span>
+        <pre class="prettyprint">
+        <code class="">
+                ntdll!NtDeviceIoControlFile:
+                0033:00007ff9`27a23fe0 4c8bd1          mov     r10,rcx
+                0033:00007ff9`27a23fe3 b807000000      mov     eax,7
+                0033:00007ff9`27a23fe8 f604250803fe7f01 test    byte ptr [SharedUserData+0x308 (00000000`7ffe0308)],1
+                0033:00007ff9`27a23ff0 7503            jne     ntdll!NtDeviceIoControlFile+0x15 (00007ff9`27a23ff5)
+                0033:00007ff9`27a23ff2 0f05            syscall
+                0033:00007ff9`27a23ff4 c3              ret
+                0033:00007ff9`27a23ff5 cd2e            int     2Eh
+                0033:00007ff9`27a23ff7 c3              ret
+                0033:00007ff9`27a23ff8 0f1f840000000000 nop     dword ptr [rax+rax]
+
+            </code>
+                </pre>
+        <p class="block-usages"></p>
+    </div>
+
+    <p>
+        Now we have to find out which function will called in kernel side. To do this first we look into the value that will put in to the eax register which ix <strong>0x7</strong>, now we execute following command, <strong>dd nt!KiServiceTable+0xEAXValue*0x4 L1</strong> which in our case is <strong>dd nt!KiServiceTable+0x7*0x4 L1</strong> and that will cause windbg return first value of table.
+        after that windbg will return <strong>fffff801`6d0cad8c  05c38306</strong> now the second value is the value we want and we have to use in the following instruction
+        <strong>u KiServiceTable + (0xReturnedValue >>> 4)</strong> so we have to execute <strong>u KiServiceTable + (0x05c38306 >>> 4)</strong>, after that you see instructions like below:
+    </p>
+
+
+    <div class="code-block">
+        <span class="block-header">
+            DeviceIoControl in kernel instructions</a></em></strong>
+        </span>
+        <pre class="prettyprint">
+        <code class="">
+                nt!NtDeviceIoControlFile:
+                fffff801`6d68e5a0 4883ec68        sub     rsp,68h
+                fffff801`6d68e5a4 8b8424b8000000  mov     eax,dword ptr [rsp+0B8h]
+                fffff801`6d68e5ab c644245001      mov     byte ptr [rsp+50h],1
+                fffff801`6d68e5b0 89442448        mov     dword ptr [rsp+48h],eax
+                fffff801`6d68e5b4 488b8424b0000000 mov     rax,qword ptr [rsp+0B0h]
+                fffff801`6d68e5bc 4889442440      mov     qword ptr [rsp+40h],rax
+                fffff801`6d68e5c1 8b8424a8000000  mov     eax,dword ptr [rsp+0A8h]
+                fffff801`6d68e5c8 89442438        mov     dword ptr [rsp+38h],eax
+
+            </code>
+                </pre>
+        <p class="block-usages"></p>
+    </div>
+
+    <p>
+        If you want to learn more about <strong>SSDT</strong> you can read <a href="https://www.ired.team/miscellaneous-reversing-forensics/windows-kernel-internals/glimpse-into-ssdt-in-windows-x64-kernel">this</a>.
+    </p>
+
+    <p>
+        Now put a break point in there using <strong>bp nt!NtDeviceIoControlFile</strong>, and use <strong>g</strong> to hit that break point.
+        After breakpoint hit you must confirm that you are still in our process context using <strong>!process -1 0</strong> command and it have to be your exe file.Now after this part is a little bit tricky you might get BSOD multiple times, but you have to open the call stack tab and use <strong>t</strong> and <strong>pc</strong> command till you find out all the kernel APIs called to get disk serial.
+        After a long trace you have to see something like below which contains all the kernel APIs used to get serialnumber.
+    </p>
+
+    <p>
+        <img src="CallStackKernelAPIs.jpg" alt="CallStackKernelAPIs">
+    </p>
+
+    <p>
+        Now you know that <strong>storport.sys</strong> is the driver that gets that data, so first we get its pdb file to be able to analyze it with IDA.Simply use <strong>lm</strong> to list all modules and then find <strong>storport</strong> click on it and then click on browse all global symbols, that will cause windbg download the pdb file.
+        Now copy that pdb file and paste it into your VM. and on your VM go to Local Disk <strong>(C:)\Windows\System32\drivers</strong> and copy <strong>storport.sys</strong> beside its pdb and load it into IDA.
+    </p>
+    <p>
+        Search for <strong>RaGetUnitStorageDeviceProperty</strong> and decompile it using <strong>F5</strong> key.You can see that it uses some kind of struct and puts data into an array finally and returns it if you analyze the decompiled source. To confirm this we just need a simple debug to confirm this function gets serial disks. So once more run the compiled exe file and put a breakpoint on <strong>RaGetUnitStorageDeviceProperty</strong> using <strong>bp storport!RaGetUnitStorageDeviceProperty</strong> command.
+        Simply keep continuing till you hit the desired break point, now if you analyze the codes of this driver in IDA, you can see the final <strong>call</strong> instruction at the bottom. Using the <strong>pc</strong> command we debug the instruction to get to that call which you can see it below.
+    </p>
+
+    <p>
+
+        <div class="code-block">
+            <span class="block-header">
+                Part of RaGetUnitStorageDeviceProperty</a></em></strong>
+            </span>
+            <pre class="prettyprint">
+            <code class="">
+                    fffff801`6edd573c e8bfa9f9ff      call    storport!memcpy (fffff801`6ed70100)
+                    fffff801`6edd5741 458bc6          mov     r8d,r14d
+                    fffff801`6edd5744 488d542420      lea     rdx,[rsp+20h]
+                    fffff801`6edd5749 498bcc          mov     rcx,r12
+                    fffff801`6edd574c e8afa9f9ff      call    storport!memcpy (fffff801`6ed70100)
+                    fffff801`6edd5751 33c0            xor     eax,eax
+                    fffff801`6edd5753 458937          mov     dword ptr [r15],r14d
+                    fffff801`6edd5756 488b8db0000000  mov     rcx,qword ptr [rbp+0B0h]
+                    fffff801`6edd575d 4833cc          xor     rcx,rsp
+                    fffff801`6edd5760 e83b9bf9ff      call    storport!_security_check_cookie (fffff801`6ed6f2a0)
+                    fffff801`6edd5765 4881c4c0010000  add     rsp,1C0h
+
+                </code>
+                </pre>
+            <p class="block-usages"></p>
+        </div>
+
+    </p>
+
+    <p>
+        By some analyzing you can find out code will keep data in <strong>[rsp+20h]</strong>, simply if we chek this place on memory you see the below information there:
+    </p>
+
+    <p>
+        <img src="SerialsInMeomory.jpg" alt="SerialsInMeomory">
+    </p>
+
+    <p>
+        So we confirmed this is the function, however the used struct is still unknown. We will discuss how to find it in the next part, but we mention one of the time consuming methods here and keep the neat method for the next part.You can use <strong>dt module!*</strong> which will be <strong>dt storport!*</strong> to get all the structs that <strong>strport.sys</strong> uses and then analyze them manually.
+        If you spend a lot of time doing reverse engineering you can confirm the struct is <strong>_RAID_UNIT_EXTENSION</strong> which will be discussed in next part.
+    </p>
+
+
+</body>
+</html>
