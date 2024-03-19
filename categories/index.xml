@@ -2,59 +2,59 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on Exists4All</title>
-    <link>exists4all.github.io/categories/</link>
+    <link>https://exists4all.github.io/categories/</link>
     <description>Recent content in Categories on Exists4All</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 17 Mar 2024 23:00:30 +0330</lastBuildDate>
-    <atom:link href="exists4all.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://exists4all.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Cryptography</title>
-      <link>exists4all.github.io/categories/cryptography/</link>
+      <link>https://exists4all.github.io/categories/cryptography/</link>
       <pubDate>Sun, 17 Mar 2024 23:00:30 +0330</pubDate>
-      <guid>exists4all.github.io/categories/cryptography/</guid>
+      <guid>https://exists4all.github.io/categories/cryptography/</guid>
       <description></description>
     </item>
     <item>
       <title>Reverse Engineering</title>
-      <link>exists4all.github.io/categories/reverse-engineering/</link>
+      <link>https://exists4all.github.io/categories/reverse-engineering/</link>
       <pubDate>Sun, 17 Mar 2024 23:00:30 +0330</pubDate>
-      <guid>exists4all.github.io/categories/reverse-engineering/</guid>
+      <guid>https://exists4all.github.io/categories/reverse-engineering/</guid>
       <description></description>
     </item>
     <item>
       <title>Windows</title>
-      <link>exists4all.github.io/categories/windows/</link>
+      <link>https://exists4all.github.io/categories/windows/</link>
       <pubDate>Sun, 17 Mar 2024 23:00:30 +0330</pubDate>
-      <guid>exists4all.github.io/categories/windows/</guid>
+      <guid>https://exists4all.github.io/categories/windows/</guid>
       <description></description>
     </item>
     <item>
       <title>X64dbg</title>
-      <link>exists4all.github.io/categories/x64dbg/</link>
+      <link>https://exists4all.github.io/categories/x64dbg/</link>
       <pubDate>Sun, 17 Mar 2024 23:00:30 +0330</pubDate>
-      <guid>exists4all.github.io/categories/x64dbg/</guid>
+      <guid>https://exists4all.github.io/categories/x64dbg/</guid>
       <description></description>
     </item>
     <item>
       <title>Driver Development</title>
-      <link>exists4all.github.io/categories/driver-development/</link>
+      <link>https://exists4all.github.io/categories/driver-development/</link>
       <pubDate>Sun, 17 Mar 2024 07:37:04 +0330</pubDate>
-      <guid>exists4all.github.io/categories/driver-development/</guid>
+      <guid>https://exists4all.github.io/categories/driver-development/</guid>
       <description></description>
     </item>
     <item>
       <title>Kernel</title>
-      <link>exists4all.github.io/categories/kernel/</link>
+      <link>https://exists4all.github.io/categories/kernel/</link>
       <pubDate>Sun, 17 Mar 2024 07:37:04 +0330</pubDate>
-      <guid>exists4all.github.io/categories/kernel/</guid>
+      <guid>https://exists4all.github.io/categories/kernel/</guid>
       <description></description>
     </item>
     <item>
       <title>Note</title>
-      <link>exists4all.github.io/categories/note/</link>
+      <link>https://exists4all.github.io/categories/note/</link>
       <pubDate>Sun, 17 Mar 2024 06:36:21 +0330</pubDate>
-      <guid>exists4all.github.io/categories/note/</guid>
+      <guid>https://exists4all.github.io/categories/note/</guid>
       <description></description>
     </item>
   </channel>
