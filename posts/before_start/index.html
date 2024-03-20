@@ -448,6 +448,9 @@
 <li>
 <p>For some functions you are going to use internal .lib functions and when you use the header file you will get a linker error. For example <strong>FltGetVolumeGuidName</strong> function, you will get linker error if you just include <strong>fltkernel.h</strong> in your source code to fix this problem you find <strong>.lib</strong> name which is <strong>FltMgr.lib</strong> in our case then head to <strong>Linker-&gt;Input-&gt;Additional</strong> Dependencies and add <strong>$(DDK_LIB_PATH)\fltMgr.lib</strong> to resolve issue.</p>
 </li>
+<li>
+<p>After working and testing VMWare and Hyper-V, I can say in my experience Hyper-V works much much better for Windows kernel experiments. I had multiple problems with VMWare in last few experiments. As a result, I am no longer using VMWare.</p>
+</li>
 </ol>
 <hr>
 
@@ -498,7 +501,7 @@
                 <li>
                     
                         Word Count:
-                        645
+                        686
                     
                 </li>
             
